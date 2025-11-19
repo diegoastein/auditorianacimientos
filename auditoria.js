@@ -14,6 +14,7 @@ import {
 
 // --- Configuración de Firebase ---
 // ⚠️ ¡ATENCIÓN! PEGA TUS CREDENCIALES DE FIREBASE AQUÍ ⚠️
+
 const firebaseConfig = {
   apiKey: "AIzaSyCmuO4U_fDthWu_vY-ghx9marNtF78_vzM",
   authDomain: "nacimientos2.firebaseapp.com",
@@ -152,8 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
             consultasView.classList.remove('hidden');
             tabConsultas.classList.add('active');
             tabConsultas.classList.remove('inactive');
-            // Al cambiar, ejecutamos una búsqueda inicial (vacía por defecto)
-            searchButton.click(); 
+            // Al cambiar, NO ejecutamos searchButton.click() aquí. Dejamos que el onSnapshot lo haga, 
+            // o que el usuario presione el botón para que la tabla comience vacía.
+            renderReportTable([], false);
         } else if (tabName === 'log') {
             logView.classList.remove('hidden');
             tabLog.classList.add('active');
@@ -177,17 +179,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const pcd = document.getElementById('filter-pcd').value;
         const liquido = document.getElementById('filter-liquido').value;
         
+        // Nuevos filtros de rango
+        const edadMaternaDesde = document.getElementById('filter-edad-materna-desde').value ? parseInt(document.getElementById('filter-edad-materna-desde').value) : null;
+        const edadMaternaHasta = document.getElementById('filter-edad-materna-hasta').value ? parseInt(document.getElementById('filter-edad-materna-hasta').value) : null;
+        const controlesDesde = document.getElementById('filter-controles-desde').value ? parseInt(document.getElementById('filter-controles-desde').value) : null;
+        const controlesHasta = document.getElementById('filter-controles-hasta').value ? parseInt(document.getElementById('filter-controles-hasta').value) : null;
+        const pesoDesde = document.getElementById('filter-peso-desde').value ? parseFloat(document.getElementById('filter-peso-desde').value) : null;
+        const pesoHasta = document.getElementById('filter-peso-hasta').value ? parseFloat(document.getElementById('filter-peso-hasta').value) : null;
+        const egDesde = document.getElementById('filter-eg-desde').value ? parseInt(document.getElementById('filter-eg-desde').value) : null;
+        const egHasta = document.getElementById('filter-eg-hasta').value ? parseInt(document.getElementById('filter-eg-hasta').value) : null;
+        const apgar1Desde = document.getElementById('filter-apgar1-desde').value ? parseInt(document.getElementById('filter-apgar1-desde').value) : null;
+        const apgar1Hasta = document.getElementById('filter-apgar1-hasta').value ? parseInt(document.getElementById('filter-apgar1-hasta').value) : null;
+        const antPatologicos = document.getElementById('filter-ant-patologicos').value;
+        
 
-        // Si no hay datos cargados, no hacemos nada
-        if (allPatients.length === 0 && (apellido || fechaDesde || fechaHasta || diagnostico || evolucion || rhMaterno || tipoNacimiento || pcd || liquido)) {
-             renderReportTable([], true); // Renderizar tabla vacía después de búsqueda sin resultados
+        // Si no hay datos cargados, o si el usuario no ha puesto ningún criterio
+        if (allPatients.length === 0) {
+             renderReportTable([], true); 
              exportFilteredButton.dataset.filteredData = JSON.stringify([]);
              return;
         }
 
         let filteredPatients = allPatients;
 
-        // Filtros de Texto y Fecha
+        // --- Aplicar Filtros ---
+
+        // 1. Filtros de Texto y Fecha
         if (apellido) {
             filteredPatients = filteredPatients.filter(p => p.apellido && p.apellido.toLowerCase().includes(apellido));
         }
@@ -208,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Filtros de Selección Avanzada (Filtrar solo si tienen un valor seleccionado)
+        // 2. Filtros de Selección Avanzada (Filtrar solo si tienen un valor seleccionado)
         if (diagnostico) {
             filteredPatients = filteredPatients.filter(p => 
                 p.diagnostico && Array.isArray(p.diagnostico) && p.diagnostico.includes(diagnostico)
@@ -229,6 +246,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (liquido) {
              filteredPatients = filteredPatients.filter(p => p.liquido_amniotico === liquido);
         }
+        if (antPatologicos) {
+             filteredPatients = filteredPatients.filter(p => p.antPatologicos && Array.isArray(p.antPatologicos) && p.antPatologicos.includes(antPatologicos));
+        }
+
+        // 3. Filtros de Rango Numérico
+        if (edadMaternaDesde !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.edad_materna || 0) >= edadMaternaDesde);
+        }
+        if (edadMaternaHasta !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.edad_materna || 0) <= edadMaternaHasta);
+        }
+        if (controlesDesde !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.num_controles || 0) >= controlesDesde);
+        }
+        if (controlesHasta !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.num_controles || 0) <= controlesHasta);
+        }
+        if (pesoDesde !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.peso || 0) >= pesoDesde);
+        }
+        if (pesoHasta !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.peso || 0) <= pesoHasta);
+        }
+        if (egDesde !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.eg || 0) >= egDesde);
+        }
+        if (egHasta !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.eg || 0) <= egHasta);
+        }
+        if (apgar1Desde !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.apgar1 || 0) >= apgar1Desde);
+        }
+        if (apgar1Hasta !== null) {
+            filteredPatients = filteredPatients.filter(p => (p.apgar1 || 0) <= apgar1Hasta);
+        }
 
 
         renderReportTable(filteredPatients, true);
@@ -245,6 +297,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('filter-tipo-nacimiento').value = '';
         document.getElementById('filter-pcd').value = '';
         document.getElementById('filter-liquido').value = '';
+        document.getElementById('filter-edad-materna-desde').value = '';
+        document.getElementById('filter-edad-materna-hasta').value = '';
+        document.getElementById('filter-controles-desde').value = '';
+        document.getElementById('filter-controles-hasta').value = '';
+        document.getElementById('filter-peso-desde').value = '';
+        document.getElementById('filter-peso-hasta').value = '';
+        document.getElementById('filter-eg-desde').value = '';
+        document.getElementById('filter-eg-hasta').value = '';
+        document.getElementById('filter-apgar1-desde').value = '';
+        document.getElementById('filter-apgar1-hasta').value = '';
+        document.getElementById('filter-ant-patologicos').value = '';
         
         searchButton.click(); // Vuelve a ejecutar la búsqueda con filtros limpios
         showToast("Filtros limpiados", "success");
@@ -257,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSearchResult) {
                 pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No se encontraron pacientes con esos criterios.</td></tr>';
             } else {
+                 // **ESTE ES EL CAMBIO CLAVE: NO CARGAR DATOS INICIALMENTE**
                  pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Aplique filtros para generar un reporte.</td></tr>';
             }
             return;
@@ -329,8 +393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         logDetailsContent.innerHTML = `
             <div class="space-y-2">
-                <p class="font-semibold">Borrado por: <span class="font-normal">${log.deletedBy}</span></p>
-                <p class="font-semibold">Fecha/Hora: <span class="font-normal">${log.deletedAt.toDate().toLocaleString('es-AR')}</span></p>
+                <p class="font-semibold">Borrado por: <span class="font-normal">${log.deletedBy || '-'}</span></p>
+                <p class="font-semibold">Fecha/Hora: <span class="font-normal">${log.deletedAt ? log.deletedAt.toDate().toLocaleString('es-AR') : '-'}</span></p>
             </div>
             <hr class="my-4">
             ${formatPatientData(log.patientData)}

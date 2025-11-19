@@ -81,24 +81,24 @@
                     <h2 class="text-2xl font-semibold text-blue-700 mb-4">Filtros de Reporte Avanzado</h2>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <!-- Columna 1: Filtros Básicos y Fechas -->
+                        <!-- Columna 1: Filtros Generales y Fechas -->
                         <div class="space-y-4 col-span-1">
                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Filtros Generales</h3>
                             <div>
                                 <label for="search-apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
                                 <input type="text" id="search-apellido" class="form-input mt-1" placeholder="Buscar por apellido...">
                             </div>
-                            <div>
-                                <label for="search-fecha-desde" class="block text-sm font-medium text-gray-700">Nacido desde</label>
-                                <input type="date" id="search-fecha-desde" class="form-input mt-1">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label for="search-fecha-desde" class="block text-sm font-medium text-gray-700">Nacido desde</label><input type="date" id="search-fecha-desde" class="form-input mt-1"></div>
+                                <div><label for="search-fecha-hasta" class="block text-sm font-medium text-gray-700">Nacido hasta</label><input type="date" id="search-fecha-hasta" class="form-input mt-1"></div>
                             </div>
-                            <div>
-                                <label for="search-fecha-hasta" class="block text-sm font-medium text-gray-700">Nacido hasta</label>
-                                <input type="date" id="search-fecha-hasta" class="form-input mt-1">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label for="filter-edad-materna-desde" class="block text-sm font-medium text-gray-700">Edad Mat. Desde</label><input type="number" id="filter-edad-materna-desde" class="form-input mt-1" min="10"></div>
+                                <div><label for="filter-edad-materna-hasta" class="block text-sm font-medium text-gray-700">Edad Mat. Hasta</label><input type="number" id="filter-edad-materna-hasta" class="form-input mt-1" min="10"></div>
                             </div>
-                            <div class="flex gap-4 pt-2">
-                                <button id="search-button" class="btn-primary flex-1">Aplicar Filtros</button>
-                                <button id="clear-search-button" class="btn-secondary flex-1">Limpiar</button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label for="filter-controles-desde" class="block text-sm font-medium text-gray-700">Controles Desde</label><input type="number" id="filter-controles-desde" class="form-input mt-1" min="0"></div>
+                                <div><label for="filter-controles-hasta" class="block text-sm font-medium text-gray-700">Controles Hasta</label><input type="number" id="filter-controles-hasta" class="form-input mt-1" min="0"></div>
                             </div>
                         </div>
 
@@ -126,19 +126,42 @@
                                     <option value="obito">Óbito</option>
                                 </select>
                             </div>
-                             <div>
-                                <label for="filter-tipo-nacimiento" class="block text-sm font-medium text-gray-700">Tipo de Nacimiento</label>
+                            <div>
+                                <label for="filter-tipo-nacimiento" class="block text-sm font-medium text-gray-700">Tipo de Parto</label>
                                 <select id="filter-tipo-nacimiento" class="form-input mt-1">
                                     <option value="">Cualquiera</option>
                                     <option value="parto">Parto</option>
                                     <option value="cesarea">Cesárea</option>
                                 </select>
                             </div>
+                            <div>
+                                <label for="filter-ant-patologicos" class="block text-sm font-medium text-gray-700">Ant. Patológicos</label>
+                                <select id="filter-ant-patologicos" class="form-input mt-1">
+                                    <option value="">Cualquiera</option>
+                                    <option value="hta">HTA</option><option value="dbt">DBT</option><option value="dbt_gestacional">DBT gestacional</option>
+                                    <option value="hipotiroidismo">Hipotiroidismo</option><option value="hipertiroidismo">Hipertiroidismo</option>
+                                    <option value="infeccion_urinaria">Infección Urinaria</option><option value="consumo_problematico">Consumo Problemático</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- Columna 3: Filtros Inmunológicos/Obstétricos -->
+                        <!-- Columna 3: Filtros Antropométricos y Perinatales -->
                         <div class="space-y-4 col-span-1">
-                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Filtros Inmunológicos</h3>
+                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Mediciones y Parámetros</h3>
+                             <div class="grid grid-cols-2 gap-2">
+                                <div><label for="filter-peso-desde" class="block text-sm font-medium text-gray-700">Peso (gr) Desde</label><input type="number" id="filter-peso-desde" class="form-input mt-1" min="0"></div>
+                                <div><label for="filter-peso-hasta" class="block text-sm font-medium text-gray-700">Peso (gr) Hasta</label><input type="number" id="filter-peso-hasta" class="form-input mt-1" min="0"></div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-2">
+                                <div><label for="filter-eg-desde" class="block text-sm font-medium text-gray-700">EG (sem) Desde</label><input type="number" id="filter-eg-desde" class="form-input mt-1" min="20" max="45"></div>
+                                <div><label for="filter-eg-hasta" class="block text-sm font-medium text-gray-700">EG (sem) Hasta</label><input type="number" id="filter-eg-hasta" class="form-input mt-1" min="20" max="45"></div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-2">
+                                <div><label for="filter-apgar1-desde" class="block text-sm font-medium text-gray-700">Apgar 1 Desde</label><input type="number" id="filter-apgar1-desde" class="form-input mt-1" min="0" max="10"></div>
+                                <div><label for="filter-apgar1-hasta" class="block text-sm font-medium text-gray-700">Apgar 1 Hasta</label><input type="number" id="filter-apgar1-hasta" class="form-input mt-1" min="0" max="10"></div>
+                            </div>
+                             
+                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2 mt-4">Otros Filtros</h3>
                              <div>
                                 <label for="filter-rh-materno" class="block text-sm font-medium text-gray-700">Rh Materno</label>
                                 <select id="filter-rh-materno" class="form-input mt-1">
@@ -155,7 +178,7 @@
                                     <option value="negativo">Negativo</option>
                                 </select>
                             </div>
-                            <div>
+                             <div>
                                 <label for="filter-liquido" class="block text-sm font-medium text-gray-700">Líquido Amniótico</label>
                                 <select id="filter-liquido" class="form-input mt-1">
                                     <option value="">Cualquiera</option>

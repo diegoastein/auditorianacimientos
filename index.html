@@ -100,6 +100,11 @@
                                 <div><label for="filter-controles-desde" class="block text-sm font-medium text-gray-700">Controles Desde</label><input type="number" id="filter-controles-desde" class="form-input mt-1" min="0"></div>
                                 <div><label for="filter-controles-hasta" class="block text-sm font-medium text-gray-700">Controles Hasta</label><input type="number" id="filter-controles-hasta" class="form-input mt-1" min="0"></div>
                             </div>
+                            
+                            <div class="flex gap-4 pt-2">
+                                <button id="search-button" class="btn-primary flex-1">Aplicar Filtros</button>
+                                <button id="clear-search-button" class="btn-secondary flex-1">Limpiar</button>
+                            </div>
                         </div>
 
                         <!-- Columna 2: Filtros de Clasificación Clínica -->
@@ -135,7 +140,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="filter-ant-patologicos" class="block text-sm font-medium text-gray-700">Ant. Patológicos</label>
+                                <label for="filter-ant-patologicos" class="block text-sm font-medium text-gray-700">Ant. Patológicos (Madre)</label>
                                 <select id="filter-ant-patologicos" class="form-input mt-1">
                                     <option value="">Cualquiera</option>
                                     <option value="hta">HTA</option><option value="dbt">DBT</option><option value="dbt_gestacional">DBT gestacional</option>

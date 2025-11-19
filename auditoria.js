@@ -14,7 +14,6 @@ import {
 
 // --- Configuración de Firebase ---
 // ⚠️ ¡ATENCIÓN! PEGA TUS CREDENCIALES DE FIREBASE AQUÍ ⚠️
-
 const firebaseConfig = {
   apiKey: "AIzaSyCmuO4U_fDthWu_vY-ghx9marNtF78_vzM",
   authDomain: "nacimientos2.firebaseapp.com",
@@ -173,10 +172,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const fechaHasta = document.getElementById('search-fecha-hasta').value;
         const diagnostico = document.getElementById('filter-diagnostico').value;
         const evolucion = document.getElementById('filter-evolucion').value;
+        const tipoNacimiento = document.getElementById('filter-tipo-nacimiento').value;
         const rhMaterno = document.getElementById('filter-rh-materno').value;
+        const pcd = document.getElementById('filter-pcd').value;
+        const liquido = document.getElementById('filter-liquido').value;
+        
 
         // Si no hay datos cargados, no hacemos nada
-        if (allPatients.length === 0 && (apellido || fechaDesde || fechaHasta || diagnostico || evolucion || rhMaterno)) {
+        if (allPatients.length === 0 && (apellido || fechaDesde || fechaHasta || diagnostico || evolucion || rhMaterno || tipoNacimiento || pcd || liquido)) {
              renderReportTable([], true); // Renderizar tabla vacía después de búsqueda sin resultados
              exportFilteredButton.dataset.filteredData = JSON.stringify([]);
              return;
@@ -205,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Filtros de Selección Avanzada
+        // Filtros de Selección Avanzada (Filtrar solo si tienen un valor seleccionado)
         if (diagnostico) {
             filteredPatients = filteredPatients.filter(p => 
                 p.diagnostico && Array.isArray(p.diagnostico) && p.diagnostico.includes(diagnostico)
@@ -216,6 +219,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (rhMaterno) {
              filteredPatients = filteredPatients.filter(p => p.rh_materno === rhMaterno);
+        }
+        if (tipoNacimiento) {
+             filteredPatients = filteredPatients.filter(p => p.tipo_nacimiento === tipoNacimiento);
+        }
+        if (pcd) {
+             filteredPatients = filteredPatients.filter(p => p.pcd === pcd);
+        }
+        if (liquido) {
+             filteredPatients = filteredPatients.filter(p => p.liquido_amniotico === liquido);
         }
 
 
@@ -230,6 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('filter-diagnostico').value = '';
         document.getElementById('filter-evolucion').value = '';
         document.getElementById('filter-rh-materno').value = '';
+        document.getElementById('filter-tipo-nacimiento').value = '';
+        document.getElementById('filter-pcd').value = '';
+        document.getElementById('filter-liquido').value = '';
         
         searchButton.click(); // Vuelve a ejecutar la búsqueda con filtros limpios
         showToast("Filtros limpiados", "success");

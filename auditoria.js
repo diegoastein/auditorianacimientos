@@ -122,8 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         patientsListenerUnsubscribe = onSnapshot(patientsCollection, (snapshot) => {
             allPatients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             totalNacimientosSpan.textContent = allPatients.length;
-            // Al cargar/actualizar los datos, ejecutar la última búsqueda/reporte
-            searchButton.click(); 
+            // Al cargar/actualizar los datos, NO ejecutamos searchButton.click() aquí para dejar la tabla vacía
         }, (error) => {
             console.error("Error en listener de Pacientes:", error);
         });
@@ -153,9 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             consultasView.classList.remove('hidden');
             tabConsultas.classList.add('active');
             tabConsultas.classList.remove('inactive');
-            // Al cambiar, NO ejecutamos searchButton.click() aquí. Dejamos que el onSnapshot lo haga, 
-            // o que el usuario presione el botón para que la tabla comience vacía.
-            renderReportTable([], false);
+            renderReportTable([], false); // INICIA VACÍO
         } else if (tabName === 'log') {
             logView.classList.remove('hidden');
             tabLog.classList.add('active');
@@ -179,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pcd = document.getElementById('filter-pcd').value;
         const liquido = document.getElementById('filter-liquido').value;
         
-        // Nuevos filtros de rango
+        // Filtros de rango
         const edadMaternaDesde = document.getElementById('filter-edad-materna-desde').value ? parseInt(document.getElementById('filter-edad-materna-desde').value) : null;
         const edadMaternaHasta = document.getElementById('filter-edad-materna-hasta').value ? parseInt(document.getElementById('filter-edad-materna-hasta').value) : null;
         const controlesDesde = document.getElementById('filter-controles-desde').value ? parseInt(document.getElementById('filter-controles-desde').value) : null;
@@ -193,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const antPatologicos = document.getElementById('filter-ant-patologicos').value;
         
 
-        // Si no hay datos cargados, o si el usuario no ha puesto ningún criterio
+        // Si no hay datos cargados, no hacemos nada
         if (allPatients.length === 0) {
              renderReportTable([], true); 
              exportFilteredButton.dataset.filteredData = JSON.stringify([]);
@@ -225,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 2. Filtros de Selección Avanzada (Filtrar solo si tienen un valor seleccionado)
+        // 2. Filtros de Selección Avanzada
         if (diagnostico) {
             filteredPatients = filteredPatients.filter(p => 
                 p.diagnostico && Array.isArray(p.diagnostico) && p.diagnostico.includes(diagnostico)
@@ -320,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSearchResult) {
                 pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No se encontraron pacientes con esos criterios.</td></tr>';
             } else {
-                 // **ESTE ES EL CAMBIO CLAVE: NO CARGAR DATOS INICIALMENTE**
+                 // **INICIA VACÍO**
                  pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Aplique filtros para generar un reporte.</td></tr>';
             }
             return;

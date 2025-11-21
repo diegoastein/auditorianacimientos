@@ -15,7 +15,6 @@ import {
 // --- Configuración de Firebase ---
 // ⚠️ ¡ATENCIÓN! PEGA TUS CREDENCIALES DE FIREBASE AQUÍ ⚠️
 
-
 const firebaseConfig = {
   apiKey: "AIzaSyCmuO4U_fDthWu_vY-ghx9marNtF78_vzM",
   authDomain: "nacimientos2.firebaseapp.com",
@@ -24,21 +23,15 @@ const firebaseConfig = {
   messagingSenderId: "228024131760",
   appId: "1:228024131760:web:8159300ab19043453d9b75"
 };
-let app, auth, db;
-
-// Inicialización de Firebase
-try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-} catch (error) {
-    console.error("CRITICAL ERROR: Fallo al inicializar Firebase. Revisa tus credenciales.", error);
-}
+// --- Inicialización ---
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 let currentUser = null;
 let allPatients = []; // Cache de pacientes para reportes
-const patientsCollection = db ? collection(db, "pacientes") : null;
-const auditLogsCollection = db ? collection(db, "logs_borrado") : null;
+const patientsCollection = collection(db, "pacientes");
+const auditLogsCollection = collection(db, "logs_borrado");
 
 let patientsListenerUnsubscribe = null; 
 let logsListenerUnsubscribe = null; 
@@ -74,15 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportFilteredButton = document.getElementById('export-filtered-button');
     
     const toast = document.getElementById('toast');
-    
-    // Si la inicialización de Firebase falló, mostramos el login y un error
-    if (!auth) {
-        loadingView.classList.add('hidden');
-        loginView.classList.remove('hidden');
-        showToast("Error CRÍTICO: Revisa tus credenciales de Firebase.", 'error');
-        return; 
-    }
-
 
     // --- Lógica de Autenticación y Carga ---
 
@@ -134,20 +118,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupRealtimeListeners() {
         // 1. Listener de Pacientes (Para Reportes)
-        if (!patientsCollection) return;
-
         if (patientsListenerUnsubscribe) patientsListenerUnsubscribe();
         patientsListenerUnsubscribe = onSnapshot(patientsCollection, (snapshot) => {
             allPatients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             totalNacimientosSpan.textContent = allPatients.length;
-            // No ejecutamos searchButton.click() aquí para mantener la tabla vacía al inicio
+            // Al cargar/actualizar los datos, NO ejecutamos searchButton.click() aquí para dejar la tabla vacía
         }, (error) => {
             console.error("Error en listener de Pacientes:", error);
         });
 
         // 2. Listener de Logs de Borrado (Para Auditoría)
-        if (!auditLogsCollection) return;
-
         if (logsListenerUnsubscribe) logsListenerUnsubscribe();
         logsListenerUnsubscribe = onSnapshot(auditLogsCollection, (snapshot) => {
             const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -335,10 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (pacientes.length === 0) {
             if (isSearchResult) {
-                pacientesTbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">No se encontraron pacientes con esos criterios.</td></tr>';
+                pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No se encontraron pacientes con esos criterios.</td></tr>';
             } else {
-                 // INICIA VACÍO
-                 pacientesTbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Aplique filtros para generar un reporte.</td></tr>';
+                 // **INICIA VACÍO**
+                 pacientesTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Aplique filtros para generar un reporte.</td></tr>';
             }
             return;
         }
@@ -350,7 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="p-4 whitespace-nowrap">${p.apellido || ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.nombre || ''}</td>
                 <td class="p-4 whitespace-nowrap">${formatDate(p.fecha_nacimiento)}</td>
-                <td class="p-4 whitespace-nowrap text-sm">${p.createdBy || '-'}</td> <!-- CAMBIO AÑADIDO -->
                 <td class="p-4 whitespace-nowrap">${p.diagnostico ? p.diagnostico.join(', ') : ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.evolucion || '-'}</td>
                 <td class="p-4 whitespace-nowrap text-right">
@@ -475,8 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <h4 class="font-bold mt-3 text-blue-700">Notas Generales</h4>
             <p class="text-sm whitespace-pre-wrap">${p.notas || '-'}</p>
-            <hr class="my-3">
-            <p class="text-xs text-gray-500">Ingresado por: ${p.createdBy || '-'} / Modificado por: ${p.lastModifiedBy || '-'}</p>
         `;
     }
 
@@ -486,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    // Exportación
+    // Exportación (similar al app.js original)
     const exportHeadersMap = {
         apellido: "Apellido", nombre: "Nombre", fecha_nacimiento: "Fecha Nacimiento", hora_nacimiento: "Hora Nacimiento",
         edad_materna: "Edad Materna", g: "G", p: "P", a: "A", controlada: "Controlada", num_controles: "N° Controles",
@@ -498,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vdrl_fecha: "Fecha VDRL", vdrl_resultado: "Res. VDRL", hiv_fecha: "Fecha HIV", hiv_resultado: "Res. HIV",
         chagas_fecha: "Fecha Chagas", chagas_resultado: "Res. Chagas", hbv_fecha: "Fecha HBV", hbv_resultado: "Res. HBV",
         toxo_fecha: "Fecha Toxo", toxo_resultado: "Res. Toxo", cmv_fecha: "Fecha CMV", cmv_resultado: "Res. CMV",
-        serologias_notas: "Notas Serologías", createdBy: "Creado Por", createdAt: "Fecha Creación", // Added createdBy here
+        serologias_notas: "Notas Serologías", createdBy: "Creado Por", createdAt: "Fecha Creación",
         lastModifiedBy: "Modificado Por", lastModifiedAt: "Fecha Modificación"
     };
 
@@ -526,8 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
-
         link.setAttribute("download", filename);
         document.body.appendChild(link);
         link.click();
@@ -553,4 +528,6 @@ Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use e
     function getFirebaseErrorMessage(error) {
         return error.message;
     }
-}
+
+    switchTab('consultas');
+});

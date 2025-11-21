@@ -24,10 +24,9 @@ const firebaseConfig = {
   messagingSenderId: "228024131760",
   appId: "1:228024131760:web:8159300ab19043453d9b75"
 };
-
 let app, auth, db;
 
-// Inicialización de Firebase (Estable)
+// Inicialización de Firebase
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -351,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="p-4 whitespace-nowrap">${p.apellido || ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.nombre || ''}</td>
                 <td class="p-4 whitespace-nowrap">${formatDate(p.fecha_nacimiento)}</td>
-                <td class="p-4 whitespace-nowrap text-sm">${p.createdBy || '-'}</td>
+                <td class="p-4 whitespace-nowrap text-sm">${p.createdBy || '-'}</td> <!-- CAMBIO AÑADIDO -->
                 <td class="p-4 whitespace-nowrap">${p.diagnostico ? p.diagnostico.join(', ') : ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.evolucion || '-'}</td>
                 <td class="p-4 whitespace-nowrap text-right">
@@ -476,6 +475,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <h4 class="font-bold mt-3 text-blue-700">Notas Generales</h4>
             <p class="text-sm whitespace-pre-wrap">${p.notas || '-'}</p>
+            <hr class="my-3">
+            <p class="text-xs text-gray-500">Ingresado por: ${p.createdBy || '-'} / Modificado por: ${p.lastModifiedBy || '-'}</p>
         `;
     }
 
@@ -497,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vdrl_fecha: "Fecha VDRL", vdrl_resultado: "Res. VDRL", hiv_fecha: "Fecha HIV", hiv_resultado: "Res. HIV",
         chagas_fecha: "Fecha Chagas", chagas_resultado: "Res. Chagas", hbv_fecha: "Fecha HBV", hbv_resultado: "Res. HBV",
         toxo_fecha: "Fecha Toxo", toxo_resultado: "Res. Toxo", cmv_fecha: "Fecha CMV", cmv_resultado: "Res. CMV",
-        serologias_notas: "Notas Serologías", createdBy: "Creado Por", createdAt: "Fecha Creación",
+        serologias_notas: "Notas Serologías", createdBy: "Creado Por", createdAt: "Fecha Creación", // Added createdBy here
         lastModifiedBy: "Modificado Por", lastModifiedAt: "Fecha Modificación"
     };
 
@@ -525,6 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+
         link.setAttribute("download", filename);
         document.body.appendChild(link);
         link.click();

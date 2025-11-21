@@ -15,6 +15,7 @@ import {
 // --- Configuración de Firebase ---
 // ⚠️ ¡ATENCIÓN! PEGA TUS CREDENCIALES DE FIREBASE AQUÍ ⚠️
 
+
 const firebaseConfig = {
   apiKey: "AIzaSyCmuO4U_fDthWu_vY-ghx9marNtF78_vzM",
   authDomain: "nacimientos2.firebaseapp.com",
@@ -349,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="p-4 whitespace-nowrap">${p.apellido || ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.nombre || ''}</td>
                 <td class="p-4 whitespace-nowrap">${formatDate(p.fecha_nacimiento)}</td>
-                <td class="p-4 whitespace-nowrap text-sm">${p.createdBy || '-'}</td> <!-- CAMBIO AÑADIDO -->
+                <td class="p-4 whitespace-nowrap text-sm">${p.createdBy || '-'}</td> <!-- CORRECCIÓN AQUÍ -->
                 <td class="p-4 whitespace-nowrap">${p.diagnostico ? p.diagnostico.join(', ') : ''}</td>
                 <td class="p-4 whitespace-nowrap">${p.evolucion || '-'}</td>
                 <td class="p-4 whitespace-nowrap text-right">

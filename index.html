@@ -3,38 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Auditoría y Reportes</title>
+    <title>Panel de Auditoría y Estadísticas Neonatales</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Estilos de Auditoría -->
-    <link rel="stylesheet" href="auditoria.css">
-    
-    <!-- Lógica de Auditoría -->
-    <script type="module" src="auditoria.js"></script>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Estilos CSS -->
+    <style>
+        /* Fuente general */
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Estilos personalizados heredados y nuevos */
+        .btn-primary {
+            background-color: #1d4ed8; color: white; padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; font-weight: bold; transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover { background-color: #0c388a; }
+        
+        .btn-secondary {
+            background-color: #e5e7eb; color: #4b5563; padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-secondary:hover { background-color: #d1d5db; }
+
+        .btn-export {
+            background-color: #059669; color: white; padding: 0.5rem 1rem;
+            border-radius: 0.5rem; font-weight: 600; transition: background-color 0.3s; font-size: 0.9rem;
+        }
+        .btn-export:hover { background-color: #047857; }
+
+        .form-input {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db;
+            border-radius: 0.375rem; transition: border-color 0.3s, box-shadow 0.3s; font-size: 0.9rem;
+        }
+        .form-input:focus {
+            border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); outline: none;
+        }
+        
+        .filter-section-title {
+            color: #2563eb; font-weight: 600; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.25rem; margin-bottom: 0.75rem; font-size: 0.95rem;
+        }
+
+        /* Pestañas */
+        .tab-btn {
+            padding: 1rem 1.5rem; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background-color: #f3f4f6; color: #1d4ed8; border-bottom: 3px solid #1d4ed8;
+        }
+        .tab-btn.inactive {
+            background-color: transparent; color: #6b7280;
+        }
+        .tab-btn.inactive:hover {
+            background-color: #e0f2fe; color: #1d4ed8;
+        }
+
+        /* Tarjetas del Dashboard */
+        .stat-card {
+            background: white; padding: 1.5rem; border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-left: 4px solid #3b82f6; transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        
+        .chart-container {
+            position: relative; height: 300px; width: 100%;
+            background: white; padding: 1rem; border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 1rem 2rem; border-radius: 0.5rem; color: white; font-weight: 600;
+            z-index: 100; opacity: 0; transition: opacity 0.5s, transform 0.5s; visibility: hidden;
+        }
+        #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        #toast.success { background-color: #16a34a; }
+        #toast.error { background-color: #dc2626; }
+        
+        /* Utilidades de tabla */
+        .btn-detail { background-color: #3b82f6; color: white; padding: 0.3rem 0.6rem; border-radius: 0.4rem; font-size: 0.8rem; }
+        .btn-detail:hover { background-color: #2563eb; }
+        .btn-detail-log { background-color: #dc2626; color: white; padding: 0.3rem 0.6rem; border-radius: 0.4rem; font-size: 0.8rem; }
+        .btn-detail-log:hover { background-color: #b91c1c; }
+    </style>
 </head>
 
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
 
     <!-- Vista de Carga -->
-    <div id="loading-view" class="flex items-center justify-center min-h-screen">
-        <div class="text-xl font-semibold text-blue-700">Cargando Panel de Auditoría...</div>
+    <div id="loading-view" class="flex items-center justify-center min-h-screen absolute inset-0 bg-white z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+            <div class="text-xl font-semibold text-blue-700">Cargando Panel...</div>
+        </div>
     </div>
 
     <!-- Vista de Login -->
     <div id="login-view" class="hidden min-h-screen bg-gray-200 flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-2xl">
-            <h1 class="text-3xl font-bold text-center text-blue-700 mb-8">Panel de Reportes</h1>
-            
+            <h1 class="text-3xl font-bold text-center text-blue-700 mb-8">Auditoría Neonatal</h1>
             <form id="login-form">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Iniciar Sesión (Auditoría)</h2>
                 <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
                     <input type="email" id="email" name="email" class="form-input mt-1" required>
                 </div>
                 <div class="mb-6">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <label class="block text-sm font-medium text-gray-700">Contraseña</label>
                     <input type="password" id="password" name="password" class="form-input mt-1" required>
                 </div>
                 <button type="submit" class="btn-primary w-full">Ingresar</button>
@@ -42,89 +123,201 @@
         </div>
     </div>
 
-    <!-- Vista Principal de la App -->
-    <div id="app-view" class="hidden">
+    <!-- Vista Principal -->
+    <div id="app-view" class="hidden flex-1 flex flex-col">
         
-        <!-- Cabecera de la App -->
-        <header class="bg-blue-700 text-white shadow-lg p-4">
+        <header class="bg-blue-700 text-white shadow-lg p-4 sticky top-0 z-40">
             <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-2xl font-bold">Panel de Auditoría Hospital R. Carrillo</h1>
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <h1 class="text-xl md:text-2xl font-bold">Auditoría & Estadística</h1>
+                </div>
                 <div class="flex items-center">
-                    <span id="user-email" class="text-sm mr-4 hidden md:block"></span>
-                    <button id="logout-button" class="bg-white text-blue-700 font-bold py-2 px-4 rounded-lg shadow hover:bg-blue-100 transition">
-                        Cerrar Sesión
+                    <span id="user-email" class="text-sm mr-4 hidden md:block text-blue-100"></span>
+                    <button id="logout-button" class="bg-blue-800 hover:bg-blue-900 text-white text-sm font-semibold py-2 px-4 rounded border border-blue-600 transition">
+                        Salir
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- Navegación de Pestañas -->
-        <nav class="container mx-auto px-4 sm:px-8 mt-8">
-            <div class="flex gap-x-2 border-b border-gray-300 bg-white rounded-t-lg p-2 shadow-md">
-                <button id="tab-consultas" class="tab-btn active">
-                    Consultas & Reportes
+        <nav class="container mx-auto px-4 sm:px-8 mt-6">
+            <div class="flex overflow-x-auto gap-x-2 border-b border-gray-300 bg-white rounded-t-lg p-2 shadow-sm">
+                <button id="tab-dashboard" class="tab-btn active whitespace-nowrap">
+                    📊 Dashboard Estadístico
                 </button>
-                <button id="tab-log" class="tab-btn inactive">
-                    Log de Borrado
+                <button id="tab-consultas" class="tab-btn inactive whitespace-nowrap">
+                    📋 Consultas & Reportes
+                </button>
+                <button id="tab-log" class="tab-btn inactive whitespace-nowrap">
+                    🗑️ Log de Auditoría
                 </button>
             </div>
         </nav>
 
-        <!-- Contenido de las Pestañas -->
-        <main class="container mx-auto px-4 sm:px-8 mb-12">
+        <main class="container mx-auto px-4 sm:px-8 mb-12 flex-1 bg-gray-50 border-x border-b border-gray-200 shadow-lg rounded-b-lg p-6">
             
-            <!-- Pestaña 1: Consultas & Reportes Avanzados -->
-            <div id="consultas-view" class="p-8 bg-white shadow-lg rounded-b-lg">
+            <!-- VISTA 1: DASHBOARD -->
+            <div id="dashboard-view" class="space-y-6 animate-fade-in">
                 
-                <!-- Panel de Búsqueda y Acciones -->
-                <div class="bg-blue-50 p-6 rounded-lg shadow-inner mb-8 border border-blue-200">
-                    <h2 class="text-2xl font-semibold text-blue-700 mb-4">Filtros de Reporte Avanzado</h2>
+                <!-- Barra de Filtros del Dashboard -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-blue-100 flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label for="dash-year" class="block text-sm font-medium text-gray-700">Año</label>
+                        <select id="dash-year" class="form-input mt-1 w-32 bg-gray-50 font-semibold"></select>
+                    </div>
+                    <div>
+                        <label for="dash-month" class="block text-sm font-medium text-gray-700">Mes</label>
+                        <select id="dash-month" class="form-input mt-1 w-40 bg-gray-50 font-semibold">
+                            <option value="">Todo el Año</option>
+                            <option value="0">Enero</option>
+                            <option value="1">Febrero</option>
+                            <option value="2">Marzo</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Mayo</option>
+                            <option value="5">Junio</option>
+                            <option value="6">Julio</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Septiembre</option>
+                            <option value="9">Octubre</option>
+                            <option value="10">Noviembre</option>
+                            <option value="11">Diciembre</option>
+                        </select>
+                    </div>
+                    <button id="btn-update-dash" class="btn-primary h-10 mb-0.5 text-sm shadow-sm">
+                        Aplicar Filtro
+                    </button>
+                </div>
+
+                <!-- Tarjetas KPI -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="stat-card border-l-blue-500">
+                        <p class="text-sm text-gray-500 uppercase font-bold" id="kpi-total-label">Total Nacimientos</p>
+                        <p class="text-3xl font-bold text-gray-800" id="kpi-total">0</p>
+                        <p class="text-xs text-green-600 mt-1">En periodo seleccionado</p>
+                    </div>
+                    <div class="stat-card border-l-purple-500">
+                        <p class="text-sm text-gray-500 uppercase font-bold">Tasa Cesáreas</p>
+                        <p class="text-3xl font-bold text-gray-800" id="kpi-cesareas">0%</p>
+                        <p class="text-xs text-gray-400 mt-1">Sobre partos del periodo</p>
+                    </div>
+                    <div class="stat-card border-l-green-500">
+                        <p class="text-sm text-gray-500 uppercase font-bold">Peso Promedio</p>
+                        <p class="text-3xl font-bold text-gray-800" id="kpi-peso">0g</p>
+                        <p class="text-xs text-gray-400 mt-1">Global del periodo</p>
+                    </div>
+                    <div class="stat-card border-l-red-500">
+                        <p class="text-sm text-gray-500 uppercase font-bold">Prematurez (<37s)</p>
+                        <p class="text-3xl font-bold text-gray-800" id="kpi-prematuros">0%</p>
+                        <p class="text-xs text-red-400 mt-1">Riesgo elevado</p>
+                    </div>
+                </div>
+
+                <!-- Gráficos Fila 1 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2" id="chart-time-title">Evolución de Nacimientos</h3>
+                        <canvas id="chart-mensual"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Distribución de Peso al Nacer</h3>
+                        <canvas id="chart-peso-dist"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráficos Fila 2 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Tipo de Nacimiento</h3>
+                        <canvas id="chart-tipo-parto"></canvas>
+                    </div>
+                    <div class="chart-container lg:col-span-2">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Top 5 Diagnósticos Frecuentes</h3>
+                        <canvas id="chart-diagnosticos"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráficos Fila 3 (NUEVOS) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Evolución / Destino Paciente</h3>
+                        <canvas id="chart-evolucion"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Grupos de Edad Materna</h3>
+                        <canvas id="chart-edad-materna"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA 2: CONSULTAS & REPORTES (COMPLETA) -->
+            <div id="consultas-view" class="hidden">
+                <!-- Panel de Búsqueda Avanzada -->
+                <div class="bg-white p-6 rounded-lg shadow mb-8 border border-gray-200">
+                    <h2 class="text-xl font-semibold text-blue-700 mb-6 flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Filtros Avanzados de Reporte
+                    </h2>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <!-- Columna 1: Filtros Generales y Fechas -->
-                        <div class="space-y-4 col-span-1">
-                            <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Filtros Generales</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+                        
+                        <!-- Columna 1: General -->
+                        <div class="space-y-3">
+                            <h3 class="filter-section-title">Datos Generales</h3>
                             <div>
-                                <label for="search-apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
-                                <input type="text" id="search-apellido" class="form-input mt-1" placeholder="Buscar por apellido...">
+                                <label class="block text-gray-700 font-medium">Apellido</label>
+                                <input type="text" id="search-apellido" class="form-input" placeholder="Buscar apellido...">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <div><label for="search-fecha-desde" class="block text-sm font-medium text-gray-700">Nacido desde</label><input type="date" id="search-fecha-desde" class="form-input mt-1"></div>
-                                <div><label for="search-fecha-hasta" class="block text-sm font-medium text-gray-700">Nacido hasta</label><input type="date" id="search-fecha-hasta" class="form-input mt-1"></div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Desde</label>
+                                    <input type="date" id="search-fecha-desde" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Hasta</label>
+                                    <input type="date" id="search-fecha-hasta" class="form-input">
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <div><label for="filter-edad-materna-desde" class="block text-sm font-medium text-gray-700">Edad Mat. Desde</label><input type="number" id="filter-edad-materna-desde" class="form-input mt-1" min="10"></div>
-                                <div><label for="filter-edad-materna-hasta" class="block text-sm font-medium text-gray-700">Edad Mat. Hasta</label><input type="number" id="filter-edad-materna-hasta" class="form-input mt-1" min="10"></div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Edad Mat. Min</label>
+                                    <input type="number" id="filter-edad-materna-desde" class="form-input" min="10">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Edad Mat. Max</label>
+                                    <input type="number" id="filter-edad-materna-hasta" class="form-input" min="10">
+                                </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label for="filter-controles-desde" class="block text-sm font-medium text-gray-700">Controles Desde</label><input type="number" id="filter-controles-desde" class="form-input mt-1" min="0"></div>
-                                <div><label for="filter-controles-hasta" class="block text-sm font-medium text-gray-700">Controles Hasta</label><input type="number" id="filter-controles-hasta" class="form-input mt-1" min="0"></div>
-                            </div>
-                            
-                            <div class="flex gap-4 pt-2">
-                                <button id="search-button" class="btn-primary flex-1">Aplicar Filtros</button>
-                                <button id="clear-search-button" class="btn-secondary flex-1">Limpiar</button>
+                             <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Controles Min</label>
+                                    <input type="number" id="filter-controles-desde" class="form-input" min="0">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Controles Max</label>
+                                    <input type="number" id="filter-controles-hasta" class="form-input" min="0">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Columna 2: Filtros de Clasificación Clínica -->
-                        <div class="space-y-4 col-span-1">
-                            <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Clasificación y Evolución</h3>
+                        <!-- Columna 2: Clínica -->
+                        <div class="space-y-3">
+                            <h3 class="filter-section-title">Clínica & Evolución</h3>
                             <div>
-                                <label for="filter-diagnostico" class="block text-sm font-medium text-gray-700">Diagnóstico</label>
-                                <select id="filter-diagnostico" class="form-input mt-1">
+                                <label class="block text-gray-700 font-medium">Diagnóstico</label>
+                                <select id="filter-diagnostico" class="form-input">
                                     <option value="">Cualquiera</option>
                                     <option value="rnt_paeg">RNT-PAEG</option><option value="rnt_apeg">RNT-APEG</option><option value="rnt_bpeg">RNT-BPEG</option>
                                     <option value="rnpt_paeg">RNPT-PAEG</option><option value="rnpt_bpeg">RNPT-BPEG</option><option value="rnpt_apeg">RNPT-APEG</option>
                                     <option value="rnpost_paeg">RNPOST-PAEG</option><option value="rnpost_bpeg">RNPOST-BPEG</option><option value="rnpost_apeg">RNPOST-APEG</option>
                                     <option value="asfixia">Asfixia neonatal</option><option value="dif_respiratoria">Dif. respiratoria</option>
-                                    <option value="causa_social">Causa Social</option><option value="hijo_madre_consumo">Hijo de madre con consumo problemático</option>
+                                    <option value="causa_social">Causa Social</option><option value="hijo_madre_consumo">Hijo de madre con consumo</option>
                                     <option value="otros">Otros/No Especif.</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="filter-evolucion" class="block text-sm font-medium text-gray-700">Evolución Final</label>
-                                <select id="filter-evolucion" class="form-input mt-1">
+                                <label class="block text-gray-700 font-medium">Evolución</label>
+                                <select id="filter-evolucion" class="form-input">
                                     <option value="">Cualquiera</option>
                                     <option value="internacion_conjunta">Internación conjunta</option>
                                     <option value="utin">UTIN</option>
@@ -132,16 +325,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="filter-tipo-nacimiento" class="block text-sm font-medium text-gray-700">Tipo de Parto</label>
-                                <select id="filter-tipo-nacimiento" class="form-input mt-1">
+                                <label class="block text-gray-700 font-medium">Tipo Parto</label>
+                                <select id="filter-tipo-nacimiento" class="form-input">
                                     <option value="">Cualquiera</option>
                                     <option value="parto">Parto</option>
                                     <option value="cesarea">Cesárea</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="filter-ant-patologicos" class="block text-sm font-medium text-gray-700">Ant. Patológicos (Madre)</label>
-                                <select id="filter-ant-patologicos" class="form-input mt-1">
+                                <label class="block text-gray-700 font-medium">Ant. Patológicos</label>
+                                <select id="filter-ant-patologicos" class="form-input">
                                     <option value="">Cualquiera</option>
                                     <option value="hta">HTA</option><option value="dbt">DBT</option><option value="dbt_gestacional">DBT gestacional</option>
                                     <option value="hipotiroidismo">Hipotiroidismo</option><option value="hipertiroidismo">Hipertiroidismo</option>
@@ -150,133 +343,692 @@
                             </div>
                         </div>
 
-                        <!-- Columna 3: Filtros Antropométricos y Perinatales -->
-                        <div class="space-y-4 col-span-1">
-                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Mediciones y Parámetros</h3>
-                             <div class="grid grid-cols-2 gap-2">
-                                <div><label for="filter-peso-desde" class="block text-sm font-medium text-gray-700">Peso (gr) Desde</label><input type="number" id="filter-peso-desde" class="form-input mt-1" min="0"></div>
-                                <div><label for="filter-peso-hasta" class="block text-sm font-medium text-gray-700">Peso (gr) Hasta</label><input type="number" id="filter-peso-hasta" class="form-input mt-1" min="0"></div>
+                        <!-- Columna 3: Medidas -->
+                        <div class="space-y-3">
+                            <h3 class="filter-section-title">Medidas & Apgar</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Peso Min (gr)</label>
+                                    <input type="number" id="filter-peso-desde" class="form-input" min="0">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Peso Max (gr)</label>
+                                    <input type="number" id="filter-peso-hasta" class="form-input" min="0">
+                                </div>
                             </div>
-                             <div class="grid grid-cols-2 gap-2">
-                                <div><label for="filter-eg-desde" class="block text-sm font-medium text-gray-700">EG (sem) Desde</label><input type="number" id="filter-eg-desde" class="form-input mt-1" min="20" max="45"></div>
-                                <div><label for="filter-eg-hasta" class="block text-sm font-medium text-gray-700">EG (sem) Hasta</label><input type="number" id="filter-eg-hasta" class="form-input mt-1" min="20" max="45"></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">EG Min (sem)</label>
+                                    <input type="number" id="filter-eg-desde" class="form-input" min="20" max="45">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">EG Max (sem)</label>
+                                    <input type="number" id="filter-eg-hasta" class="form-input" min="20" max="45">
+                                </div>
                             </div>
-                             <div class="grid grid-cols-2 gap-2">
-                                <div><label for="filter-apgar1-desde" class="block text-sm font-medium text-gray-700">Apgar 1 Desde</label><input type="number" id="filter-apgar1-desde" class="form-input mt-1" min="0" max="10"></div>
-                                <div><label for="filter-apgar1-hasta" class="block text-sm font-medium text-gray-700">Apgar 1 Hasta</label><input type="number" id="filter-apgar1-hasta" class="form-input mt-1" min="0" max="10"></div>
-                            </div>
-                             
-                             <h3 class="text-lg font-semibold text-blue-600 border-b pb-2 mt-4">Otros Filtros</h3>
-                             <div>
-                                <label for="filter-rh-materno" class="block text-sm font-medium text-gray-700">Rh Materno</label>
-                                <select id="filter-rh-materno" class="form-input mt-1">
-                                    <option value="">Cualquiera</option>
-                                    <option value="+">+</option>
-                                    <option value="-">-</option>
-                                </select>
-                            </div>
-                             <div>
-                                <label for="filter-pcd" class="block text-sm font-medium text-gray-700">PCD</label>
-                                <select id="filter-pcd" class="form-input mt-1">
-                                    <option value="">Cualquiera</option>
-                                    <option value="positivo">Positivo</option>
-                                    <option value="negativo">Negativo</option>
-                                </select>
-                            </div>
-                             <div>
-                                <label for="filter-liquido" class="block text-sm font-medium text-gray-700">Líquido Amniótico</label>
-                                <select id="filter-liquido" class="form-input mt-1">
-                                    <option value="">Cualquiera</option>
-                                    <option value="claro">Claro</option>
-                                    <option value="meconial">Meconial</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Apgar 1 Min</label>
+                                    <input type="number" id="filter-apgar1-desde" class="form-input" min="0" max="10">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium text-xs">Apgar 1 Max</label>
+                                    <input type="number" id="filter-apgar1-hasta" class="form-input" min="0" max="10">
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Columna 4: Totales y Exportación -->
-                        <div class="space-y-4 col-span-1">
-                            <h3 class="text-lg font-semibold text-blue-600 border-b pb-2">Acciones y Totales</h3>
-                            <div class="text-center bg-white p-3 rounded-lg border">
-                                 <h3 class="text-lg font-semibold text-gray-700 mb-1">Total de Nacimientos</h3>
-                                 <p class="text-4xl font-bold text-blue-600">
-                                    <span id="total-nacimientos">0</span>
-                                 </p>
-                            </div>
-                            
-                            <hr class="border-gray-300">
-                            
-                            <h3 class="text-lg font-semibold text-gray-700 mb-1">Exportar Reporte</h3>
-                            <div class="flex flex-col gap-4">
-                                <button id="export-filtered-button" class="btn-export">Exportar Filtrados</button>
-                                <button id="export-all-button" class="btn-export">Exportar Todos</button>
+
+                        <!-- Columna 4: Acciones (Simplificada) -->
+                        <div class="space-y-3 flex flex-col h-full">
+                            <h3 class="filter-section-title">Acciones</h3>
+                            <div class="mt-auto space-y-2 pt-4">
+                                <p class="text-sm text-gray-500 mb-2">Presione para actualizar resultados.</p>
+                                <div class="flex flex-col gap-2">
+                                    <button id="search-button" class="btn-primary w-full text-sm shadow-md">Aplicar Filtros</button>
+                                    <button id="clear-search-button" class="btn-secondary w-full text-sm">Limpiar</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tabla de Resultados de Consultas -->
-                <h2 class="text-xl font-semibold text-blue-700 mb-4">Resultados (Consultas)</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Apellido</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha Nac.</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Diagnóstico</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Evolución</th>
-                                <th class="p-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pacientes-tbody" class="divide-y divide-gray-200">
-                            <tr><td colspan="6" class="p-4 text-center text-gray-500">Aplique filtros para generar un reporte.</td></tr>
-                        </tbody>
-                    </table>
+                <!-- Resultados -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-semibold text-gray-700">Resultados</h3>
+                            <span id="result-count" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full hidden">0 Pacientes</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="export-filtered-button" class="btn-export hidden">
+                                Exportar Filtrados
+                            </button>
+                            <button id="export-all-button" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded">
+                                Exportar Todo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Nac.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peso/EG</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diagnóstico</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Evolución</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pacientes-tbody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aplique filtros para ver los resultados.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Pestaña 2: Log de Borrado (Auditoría) -->
-            <div id="log-view" class="p-8 bg-white shadow-lg rounded-b-lg hidden">
-                <h2 class="text-2xl font-semibold text-red-600 mb-4">Historial de Registros Borrados</h2>
-                <p class="mb-6 text-gray-600">Esta tabla muestra qué paciente fue eliminado, quién realizó la acción y cuándo.</p>
 
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-red-50">
-                            <tr>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Paciente Borrado</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Usuario</th>
-                                <th class="p-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha de Borrado</th>
-                                <th class="p-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Detalles</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-tbody" class="divide-y divide-gray-200">
-                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Cargando historial...</td></tr>
-                        </tbody>
-                    </table>
+            <!-- VISTA 3: LOG -->
+            <div id="log-view" class="hidden">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold text-red-600 mb-4">Auditoría de Eliminaciones</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-red-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Usuario</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Paciente Eliminado</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Fecha</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase">Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="4" class="p-4 text-center text-gray-500">No hay registros recientes.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
         </main>
     </div>
-    
-    <!-- Modal para ver datos del paciente borrado -->
-    <div id="view-log-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            
-            <header class="flex justify-between items-center p-6 border-b bg-red-50">
-                <h2 class="text-xl font-semibold text-red-700">Datos del Paciente Eliminado</h2>
-                <button id="close-log-modal" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
-            </header>
 
-            <div class="p-6 space-y-4" id="log-details-content">
-                <p>Cargando...</p>
+    <!-- Modal Detalles -->
+    <div id="modal-detalle" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="p-4 border-b flex justify-between items-center bg-blue-50">
+                <h3 class="text-lg font-bold text-blue-800">Ficha Completa del Paciente</h3>
+                <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
+            <div id="modal-content" class="p-6 text-sm space-y-4"></div>
         </div>
     </div>
-    
-    <!-- Toast / Notificación -->
+
     <div id="toast"></div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmuO4U_fDthWu_vY-ghx9marNtF78_vzM",
+            authDomain: "nacimientos2.firebaseapp.com",
+            projectId: "nacimientos2",
+            storageBucket: "nacimientos2.firebasestorage.app",
+            messagingSenderId: "228024131760",
+            appId: "1:228024131760:web:8159300ab19043453d9b75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allPatients = [];
+        let filteredPatients = []; // Para exportación
+        let chartInstances = {};
+        let yearsAvailable = [];
+
+        // ELEMENTOS DOM
+        const views = {
+            loading: document.getElementById('loading-view'),
+            login: document.getElementById('login-view'),
+            app: document.getElementById('app-view'),
+            dashboard: document.getElementById('dashboard-view'),
+            consultas: document.getElementById('consultas-view'),
+            log: document.getElementById('log-view')
+        };
+
+        const tabs = {
+            dashboard: document.getElementById('tab-dashboard'),
+            consultas: document.getElementById('tab-consultas'),
+            log: document.getElementById('tab-log')
+        };
+
+        // --- AUTENTICACIÓN ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                views.login.classList.add('hidden');
+                views.loading.classList.remove('hidden');
+                views.app.classList.remove('hidden');
+                initDataListeners();
+                switchTab('dashboard'); // Iniciar en dashboard por defecto
+            } else {
+                views.app.classList.add('hidden');
+                views.login.classList.remove('hidden');
+                views.loading.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, e.target.email.value, e.target.password.value);
+            } catch (error) {
+                showToast("Error de acceso: " + error.message, 'error');
+            }
+        });
+
+        document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+
+        // --- NAVEGACIÓN ---
+        function switchTab(activeTabName) {
+            Object.values(tabs).forEach(t => {
+                t.classList.remove('active');
+                t.classList.add('inactive');
+                t.style.borderBottom = 'none';
+            });
+            views.dashboard.classList.add('hidden');
+            views.consultas.classList.add('hidden');
+            views.log.classList.add('hidden');
+
+            tabs[activeTabName].classList.add('active');
+            tabs[activeTabName].classList.remove('inactive');
+            views[activeTabName].classList.remove('hidden');
+
+            if(activeTabName === 'dashboard') updateDashboardCharts();
+        }
+
+        tabs.dashboard.addEventListener('click', () => switchTab('dashboard'));
+        tabs.consultas.addEventListener('click', () => switchTab('consultas'));
+        tabs.log.addEventListener('click', () => switchTab('log'));
+
+        // --- DATA LOGIC ---
+        function initDataListeners() {
+            onSnapshot(collection(db, "pacientes"), (snapshot) => {
+                allPatients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Extraer años disponibles para el filtro
+                const years = new Set(allPatients.map(p => {
+                    if(!p.fecha_nacimiento) return new Date().getFullYear();
+                    return new Date(p.fecha_nacimiento + "T00:00:00").getFullYear();
+                }));
+                yearsAvailable = Array.from(years).sort((a,b) => b - a);
+                if(yearsAvailable.length === 0) yearsAvailable = [new Date().getFullYear()];
+                
+                populateDashFilters();
+
+                views.loading.classList.add('hidden');
+                updateDashboardCharts();
+                showToast("Datos sincronizados", "success");
+            }, (error) => {
+                console.error(error);
+                views.loading.classList.add('hidden');
+                showToast("Error cargando datos", "error");
+            });
+
+            onSnapshot(query(collection(db, "logs_borrado"), orderBy("deletedAt", "desc")), (snapshot) => {
+                const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderLogs(logs);
+            });
+        }
+
+        function populateDashFilters() {
+            const yearSelect = document.getElementById('dash-year');
+            const currentVal = yearSelect.value;
+            yearSelect.innerHTML = '';
+            yearsAvailable.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            });
+            // Mantener selección o por defecto el año actual/primero
+            if(currentVal && yearsAvailable.includes(parseInt(currentVal))) {
+                yearSelect.value = currentVal;
+            } else {
+                yearSelect.value = yearsAvailable[0];
+            }
+        }
+
+        document.getElementById('btn-update-dash').addEventListener('click', updateDashboardCharts);
+
+        // --- DASHBOARD CHARTS (UPDATED) ---
+        function updateDashboardCharts() {
+            if (allPatients.length === 0) return;
+
+            // Obtener Filtros
+            const selectedYear = parseInt(document.getElementById('dash-year').value);
+            const selectedMonth = document.getElementById('dash-month').value; // puede ser ""
+            
+            // Filtrar datos para el Dashboard
+            const dashPatients = allPatients.filter(p => {
+                if(!p.fecha_nacimiento) return false;
+                const d = new Date(p.fecha_nacimiento + "T00:00:00");
+                const matchYear = d.getFullYear() === selectedYear;
+                const matchMonth = selectedMonth === "" || d.getMonth() === parseInt(selectedMonth);
+                return matchYear && matchMonth;
+            });
+
+            // 1. KPIs
+            document.getElementById('kpi-total').textContent = dashPatients.length;
+            
+            const cesareas = dashPatients.filter(p => p.tipo_nacimiento === 'cesarea').length;
+            const tasaCesarea = dashPatients.length ? ((cesareas / dashPatients.length) * 100).toFixed(1) : 0;
+            document.getElementById('kpi-cesareas').textContent = `${tasaCesarea}%`;
+            
+            const totalPeso = dashPatients.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
+            const pesoPromedio = dashPatients.length ? Math.round(totalPeso / dashPatients.length) : 0;
+            document.getElementById('kpi-peso').textContent = `${pesoPromedio}g`;
+            
+            const prematuros = dashPatients.filter(p => (Number(p.eg) || 40) < 37).length;
+            const tasaPrematuros = dashPatients.length ? ((prematuros / dashPatients.length) * 100).toFixed(1) : 0;
+            document.getElementById('kpi-prematuros').textContent = `${tasaPrematuros}%`;
+
+            // 2. Gráfico de Tiempo (Mensual o Diario)
+            let timeLabels = [];
+            let timeData = [];
+            let chartTitle = "";
+
+            if (selectedMonth === "") {
+                // Vista Anual -> Mostrar meses
+                chartTitle = `Nacimientos por Mes (${selectedYear})`;
+                const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                const monthsData = new Array(12).fill(0);
+                
+                dashPatients.forEach(p => {
+                    const d = new Date(p.fecha_nacimiento + "T00:00:00");
+                    monthsData[d.getMonth()]++;
+                });
+                timeLabels = monthNames;
+                timeData = monthsData;
+            } else {
+                // Vista Mensual -> Mostrar días
+                const monthName = document.getElementById('dash-month').options[parseInt(selectedMonth) + 1].text;
+                chartTitle = `Nacimientos por Día (${monthName} ${selectedYear})`;
+                
+                // Calcular días en el mes
+                const daysInMonth = new Date(selectedYear, parseInt(selectedMonth) + 1, 0).getDate();
+                const daysData = new Array(daysInMonth).fill(0);
+                timeLabels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+                dashPatients.forEach(p => {
+                    const d = new Date(p.fecha_nacimiento + "T00:00:00");
+                    const day = d.getDate();
+                    if(day <= daysInMonth) daysData[day - 1]++;
+                });
+                timeData = daysData;
+            }
+            
+            document.getElementById('chart-time-title').textContent = chartTitle;
+            renderChart('chart-mensual', 'line', timeLabels, timeData, 'Nacimientos', '#3b82f6', { fill: true, tension: 0.3 });
+
+
+            // 3. Otros Gráficos (Usan dashPatients filtrados)
+            const pesos = { '<1500g': 0, '1500-2500g': 0, '2500-4000g': 0, '>4000g': 0 };
+            dashPatients.forEach(p => {
+                const w = Number(p.peso) || 0;
+                if(w < 1500) pesos['<1500g']++;
+                else if(w < 2500) pesos['1500-2500g']++;
+                else if(w <= 4000) pesos['2500-4000g']++;
+                else pesos['>4000g']++;
+            });
+
+            const tiposParto = { 'Parto': 0, 'Cesárea': 0 };
+            dashPatients.forEach(p => {
+                const t = p.tipo_nacimiento === 'cesarea' ? 'Cesárea' : 'Parto';
+                tiposParto[t]++;
+            });
+
+            const diagCount = {};
+            dashPatients.forEach(p => {
+                if(Array.isArray(p.diagnostico)){
+                    p.diagnostico.forEach(d => diagCount[d] = (diagCount[d] || 0) + 1);
+                }
+            });
+            const topDiag = Object.entries(diagCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+            // NUEVOS CÁLCULOS 
+            // A. Evolución
+            const evolucionData = { 'Internacion Conjunta': 0, 'UTIN': 0, 'Obito': 0, 'Otros/Desc': 0 };
+            dashPatients.forEach(p => {
+                let ev = (p.evolucion || '').toLowerCase();
+                if(ev.includes('conjunta')) evolucionData['Internacion Conjunta']++;
+                else if(ev.includes('utin')) evolucionData['UTIN']++;
+                else if(ev.includes('obito') || ev.includes('fallecido')) evolucionData['Obito']++;
+                else evolucionData['Otros/Desc']++;
+            });
+
+            // B. Edad Materna
+            const edadMatData = { '< 20 (Adolescencia)': 0, '20 - 34 (Adulta)': 0, '>= 35 (Avanzada)': 0 };
+            dashPatients.forEach(p => {
+                const edad = parseInt(p.edad_materna);
+                if (!isNaN(edad)) {
+                    if(edad < 20) edadMatData['< 20 (Adolescencia)']++;
+                    else if(edad <= 34) edadMatData['20 - 34 (Adulta)']++;
+                    else edadMatData['>= 35 (Avanzada)']++;
+                }
+            });
+
+
+            renderChart('chart-peso-dist', 'bar', Object.keys(pesos), Object.values(pesos), 'Pacientes', '#10b981');
+            renderChart('chart-tipo-parto', 'doughnut', Object.keys(tiposParto), Object.values(tiposParto), 'Pacientes', ['#3b82f6', '#ec4899']);
+            renderChart('chart-diagnosticos', 'bar', topDiag.map(d => d[0]), topDiag.map(d => d[1]), 'Casos', '#8b5cf6', { indexAxis: 'y' });
+            
+            // RENDER NUEVOS
+            renderChart('chart-evolucion', 'pie', Object.keys(evolucionData), Object.values(evolucionData), 'Pacientes', ['#22c55e', '#f97316', '#ef4444', '#94a3b8']);
+            renderChart('chart-edad-materna', 'bar', Object.keys(edadMatData), Object.values(edadMatData), 'Pacientes', '#6366f1');
+        }
+
+        function renderChart(canvasId, type, labels, data, label, color, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(chartInstances[canvasId]) chartInstances[canvasId].destroy();
+            
+            const bgColors = Array.isArray(color) ? color : color;
+            // Si es linea, color es border, bg es transparente o solido si fill
+            const datasets = [{
+                label: label,
+                data: data,
+                backgroundColor: type === 'line' ? 'rgba(59, 130, 246, 0.1)' : bgColors,
+                borderColor: type === 'line' ? color : undefined,
+                borderWidth: type === 'line' ? 2 : 0,
+                borderRadius: type === 'bar' ? 4 : 0,
+                fill: options.fill || false,
+                tension: options.tension || 0
+            }];
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: type,
+                data: { labels: labels, datasets: datasets },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: (type === 'doughnut' || type === 'pie') } }, 
+                    scales: (type === 'line' || type === 'bar') ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {},
+                    ...options 
+                }
+            });
+        }
+
+        // --- LÓGICA DE FILTRADO (Restaurada y Potenciada) ---
+        document.getElementById('search-button').addEventListener('click', () => {
+            if (allPatients.length === 0) return showToast("No hay datos cargados aún.", "error");
+
+            // Recoger valores
+            const filters = {
+                apellido: document.getElementById('search-apellido').value.toLowerCase().trim(),
+                fechaDesde: document.getElementById('search-fecha-desde').value,
+                fechaHasta: document.getElementById('search-fecha-hasta').value,
+                diagnostico: document.getElementById('filter-diagnostico').value,
+                evolucion: document.getElementById('filter-evolucion').value,
+                tipoNacimiento: document.getElementById('filter-tipo-nacimiento').value,
+                antPatologicos: document.getElementById('filter-ant-patologicos').value,
+                edadMatDesde: parseInt(document.getElementById('filter-edad-materna-desde').value) || null,
+                edadMatHasta: parseInt(document.getElementById('filter-edad-materna-hasta').value) || null,
+                controlesDesde: parseInt(document.getElementById('filter-controles-desde').value) || null,
+                controlesHasta: parseInt(document.getElementById('filter-controles-hasta').value) || null,
+                pesoDesde: parseFloat(document.getElementById('filter-peso-desde').value) || null,
+                pesoHasta: parseFloat(document.getElementById('filter-peso-hasta').value) || null,
+                egDesde: parseInt(document.getElementById('filter-eg-desde').value) || null,
+                egHasta: parseInt(document.getElementById('filter-eg-hasta').value) || null,
+                apgar1Desde: parseInt(document.getElementById('filter-apgar1-desde').value) || null,
+                apgar1Hasta: parseInt(document.getElementById('filter-apgar1-hasta').value) || null,
+                // rhMaterno, pcd, liquido ELIMINADOS
+            };
+
+            filteredPatients = allPatients.filter(p => {
+                // Filtros Texto / Exactos
+                if (filters.apellido && !(p.apellido || '').toLowerCase().includes(filters.apellido)) return false;
+                if (filters.diagnostico && !((p.diagnostico || []).includes(filters.diagnostico))) return false;
+                if (filters.evolucion && p.evolucion !== filters.evolucion) return false;
+                if (filters.tipoNacimiento && p.tipoNacimiento !== filters.tipoNacimiento && p.tipo_nacimiento !== filters.tipoNacimiento) return false; // Compatibilidad nombres campos
+                if (filters.antPatologicos && !((p.antPatologicos || []).includes(filters.antPatologicos))) return false;
+                // if (filters.rhMaterno && p.rh_materno !== filters.rhMaterno) return false; // ELIMINADO
+                // if (filters.pcd && p.pcd !== filters.pcd) return false; // ELIMINADO
+                // if (filters.liquido && p.liquido_amniotico !== filters.liquido) return false; // ELIMINADO
+
+                // Fechas
+                if (filters.fechaDesde) {
+                    if (!p.fecha_nacimiento) return false;
+                    if (new Date(p.fecha_nacimiento) < new Date(filters.fechaDesde)) return false;
+                }
+                if (filters.fechaHasta) {
+                    if (!p.fecha_nacimiento) return false;
+                    if (new Date(p.fecha_nacimiento) > new Date(filters.fechaHasta)) return false;
+                }
+
+                // Rangos Numéricos
+                const edadMat = p.edad_materna || 0;
+                if (filters.edadMatDesde !== null && edadMat < filters.edadMatDesde) return false;
+                if (filters.edadMatHasta !== null && edadMat > filters.edadMatHasta) return false;
+
+                const controles = p.num_controles || 0;
+                if (filters.controlesDesde !== null && controles < filters.controlesDesde) return false;
+                if (filters.controlesHasta !== null && controles > filters.controlesHasta) return false;
+
+                const peso = p.peso || 0;
+                if (filters.pesoDesde !== null && peso < filters.pesoDesde) return false;
+                if (filters.pesoHasta !== null && peso > filters.pesoHasta) return false;
+
+                const eg = p.eg || 0;
+                if (filters.egDesde !== null && eg < filters.egDesde) return false;
+                if (filters.egHasta !== null && eg > filters.egHasta) return false;
+
+                const apgar1 = p.apgar1 || 0;
+                if (filters.apgar1Desde !== null && apgar1 < filters.apgar1Desde) return false;
+                if (filters.apgar1Hasta !== null && apgar1 > filters.apgar1Hasta) return false;
+
+                return true;
+            });
+
+            renderTable(filteredPatients);
+            
+            // Actualizar botón exportar filtrados
+            const exportBtn = document.getElementById('export-filtered-button');
+            const resultCount = document.getElementById('result-count');
+            if (filteredPatients.length > 0) {
+                exportBtn.classList.remove('hidden');
+                resultCount.classList.remove('hidden');
+                resultCount.textContent = `${filteredPatients.length} Pacientes encontrados`;
+            } else {
+                exportBtn.classList.add('hidden');
+                resultCount.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clear-search-button').addEventListener('click', () => {
+             // Limpiar inputs
+             document.querySelectorAll('#consultas-view input, #consultas-view select').forEach(el => el.value = '');
+             filteredPatients = [];
+             document.getElementById('pacientes-tbody').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">Aplique filtros para ver los resultados.</td></tr>';
+             document.getElementById('export-filtered-button').classList.add('hidden');
+             document.getElementById('result-count').classList.add('hidden');
+        });
+
+        function renderTable(data) {
+            const tbody = document.getElementById('pacientes-tbody');
+            tbody.innerHTML = '';
+            
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No se encontraron resultados con esos filtros.</td></tr>';
+                return;
+            }
+
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.apellido || ''}, ${p.nombre || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(p.fecha_nacimiento)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.peso || '-'}g / ${p.eg || '-'}sem</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-xs truncate max-w-xs">${(p.diagnostico || []).join(', ')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.evolucion || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="btn-detail" onclick="window.verDetalle('${p.id}')">Ver Ficha</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- EXPORTACIÓN ---
+        const exportHeadersMap = {
+            apellido: "Apellido", nombre: "Nombre", fecha_nacimiento: "Fecha Nacimiento", hora_nacimiento: "Hora Nacimiento",
+            edad_materna: "Edad Materna", g: "G", p: "P", a: "A", controlada: "Controlada", num_controles: "N° Controles",
+            antPatologicos: "Ant. Patológicos", tipo_nacimiento: "Tipo Nacimiento", membranas: "Membranas", 
+            liquido_amniotico: "Liq. Amniótico", evolucion: "Evolución", peso: "Peso (gr)", talla: "Talla (cm)",
+            pc: "PC (cm)", eg: "EG (sem)", apgar1: "Apgar 1", apgar5: "Apgar 5", grupo_materno: "Grupo Materno",
+            rh_materno: "Rh Materno", grupo_paciente: "Grupo Paciente", rh_paciente: "Rh Paciente", pcd: "PCD", pci: "PCI",
+            diagnostico: "Diagnóstico", diagnostico_otros: "Otros Diag.", notas: "Notas",
+            vdrl_fecha: "Fecha VDRL", vdrl_resultado: "Res. VDRL", hiv_fecha: "Fecha HIV", hiv_resultado: "Res. HIV",
+            chagas_fecha: "Fecha Chagas", chagas_resultado: "Res. Chagas", hbv_fecha: "Fecha HBV", hbv_resultado: "Res. HBV",
+            toxo_fecha: "Fecha Toxo", toxo_resultado: "Res. Toxo", cmv_fecha: "Fecha CMV", cmv_resultado: "Res. CMV",
+            serologias_notas: "Notas Serologías"
+        };
+
+        function exportToCSV(data, filename) {
+            if (data.length === 0) return showToast("No hay datos para exportar", "error");
+
+            const headers = Object.keys(exportHeadersMap);
+            const csvHeaders = Object.values(exportHeadersMap);
+            let csvContent = "data:text/csv;charset=utf-8," + csvHeaders.join(",") + "\r\n";
+
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    let value = row[header] || "";
+                    if (header.includes('fecha') && value && !value.toString().includes('/')) value = formatDate(value);
+                    if (Array.isArray(value)) value = value.join('; ');
+                    if (typeof value === 'boolean') value = value ? "SI" : "NO";
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+                        value = `"${value.replace(/"/g, '""')}"`;
+                    }
+                    return value;
+                });
+                csvContent += values.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Exportación completada", "success");
+        }
+
+        document.getElementById('export-all-button').addEventListener('click', () => exportToCSV(allPatients, "reporte_todos.csv"));
+        document.getElementById('export-filtered-button').addEventListener('click', () => exportToCSV(filteredPatients, "reporte_filtrado.csv"));
+
+        // --- DETALLE PACIENTE (COMPLETO) ---
+        window.verDetalle = (id) => {
+            const p = allPatients.find(x => x.id === id);
+            if(!p) return;
+            
+            const formatArray = (arr) => Array.isArray(arr) ? arr.join(', ') : (arr || '-');
+            const serologias = [
+                `VDRL: ${p.vdrl_resultado || '-'} (${p.vdrl_fecha || '-'})`,
+                `HIV: ${p.hiv_resultado || '-'} (${p.hiv_fecha || '-'})`,
+                `Chagas: ${p.chagas_resultado || '-'} (${p.chagas_fecha || '-'})`,
+                `HBV: ${p.hbv_resultado || '-'} (${p.hbv_fecha || '-'})`,
+                `Toxoplasmosis: ${p.toxo_resultado || '-'} (${p.toxo_fecha || '-'})`,
+                `CMV: ${p.cmv_resultado || '-'} (${p.cmv_fecha || '-'})`,
+            ].join(' | ');
+
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <h4 class="font-bold text-lg text-blue-700 mb-2">${p.apellido || '-'}, ${p.nombre || '-'}</h4>
+                <div class="grid grid-cols-2 gap-y-2 text-sm bg-gray-50 p-4 rounded-lg">
+                    <p><strong>Nacimiento:</strong> ${formatDate(p.fecha_nacimiento)} - ${p.hora_nacimiento || '-'}</p>
+                    <p><strong>Edad Materna:</strong> ${p.edad_materna || '-'}</p>
+                    <p><strong>G/P/A:</strong> ${p.g || '-'}/${p.p || '-'}/${p.a || '-'}</p>
+                    <p><strong>Controles:</strong> ${p.controlada === true ? 'Sí' : 'No'} (${p.num_controles || 0})</p>
+                    <p class="col-span-2"><strong>Ant. Patológicos:</strong> ${formatArray(p.antPatologicos)}</p>
+                    <p><strong>Grupo Mat/Rh:</strong> ${p.grupo_materno || '-'}/${p.rh_materno || '-'}</p>
+                    <p><strong>PCD/PCI:</strong> ${p.pcd || '-'}/${p.pci || '-'}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-y-2 text-sm border-t pt-3">
+                    <p><strong>Tipo Nacimiento:</strong> ${p.tipo_nacimiento || '-'}</p>
+                    <p><strong>Líquido:</strong> ${p.liquido_amniotico || '-'}</p>
+                    <p><strong>Peso:</strong> ${p.peso || '-'} gr</p>
+                    <p><strong>EG:</strong> ${p.eg || '-'} sem</p>
+                    <p><strong>Apgar:</strong> ${p.apgar1 || '-'}/${p.apgar5 || '-'}</p>
+                    <p><strong>Evolución:</strong> <span class="font-semibold text-blue-600">${p.evolucion || '-'}</span></p>
+                </div>
+                
+                <div class="border-t pt-3">
+                    <h5 class="font-bold text-gray-700">Serologías</h5>
+                    <p class="text-xs text-gray-600 break-words">${serologias}</p>
+                </div>
+
+                <div class="border-t pt-3">
+                    <h5 class="font-bold text-gray-700">Diagnóstico</h5>
+                    <p class="text-sm font-medium">${formatArray(p.diagnostico)}</p>
+                    ${p.diagnostico_otros ? `<p class="text-xs italic text-gray-500">Otros: ${p.diagnostico_otros}</p>` : ''}
+                </div>
+
+                 <div class="bg-yellow-50 p-3 rounded border border-yellow-200 mt-2">
+                    <h5 class="font-bold text-gray-700">Notas</h5>
+                    <p class="text-sm whitespace-pre-wrap">${p.notas || 'Sin notas adicionales.'}</p>
+                </div>
+            `;
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        };
+
+        // --- LOG VIEW (SIMPLE) ---
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logs-tbody');
+            tbody.innerHTML = '';
+            if (logs.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No hay registros de borrado.</td></tr>';
+                 return;
+            }
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-red-50';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${log.deletedBy || 'Desconocido'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${log.patientData?.apellido || 'Sin nombre'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.deletedAt ? new Date(log.deletedAt.seconds * 1000).toLocaleString() : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <button class="btn-detail-log" onclick='alert("Detalles técnicos en consola"); console.log(${JSON.stringify(log)})'>Ver JSON</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- UTILIDAD ---
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            // Si viene como string YYYY-MM-DD lo formateamos, si ya tiene formato DD/MM/YYYY lo dejamos
+            if (dateString.includes('-')) {
+                const date = new Date(dateString + "T00:00:00");
+                return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+            return dateString;
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = type;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
 </body>
 </html>
